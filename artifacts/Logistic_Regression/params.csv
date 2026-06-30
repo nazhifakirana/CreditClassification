@@ -1,0 +1,15 @@
+param,value
+C,1.0
+class_weight,
+dual,False
+fit_intercept,True
+intercept_scaling,1
+l1_ratio,0.0
+max_iter,1000
+n_jobs,
+penalty,deprecated
+random_state,42
+solver,lbfgs
+tol,0.0001
+verbose,0
+warm_start,False
