@@ -13,7 +13,7 @@ from sagemaker.sklearn.model import SKLearnModel
 # ==========================================================
 
 BUCKET = "nazhifa-credit-score-uas"
-MODEL_ARTIFACTS_DIR = "models"          # local folder with the 3 .pkl files
+MODEL_ARTIFACTS_DIR = "models"         
 MODEL_TAR_NAME = "model.tar.gz"
 MODEL_S3_KEY = "credit-score/model.tar.gz"
 ENDPOINT_NAME = "credit-score-endpoint"
@@ -21,18 +21,13 @@ REGION = "us-east-1"
 INSTANCE_TYPE = "ml.m5.large"
 FRAMEWORK_VERSION = "1.2-1"
 
-# GitHub repo that hosts inference.py + requirements.txt (src/ folder).
-# Replace with your own repo/branch before running.
+
 GIT_CONFIG = {
-    "repo": "https://github.com/<your-username>/<your-repo>.git",
+    "repo": "https://github.com/nazhifakirana/CreditClassification.git",
     "branch": "main",
 }
-ENTRY_POINT = "inference.py"  # lives at the repo root alongside requirements.txt
+ENTRY_POINT = "inference.py" 
 
-
-# ==========================================================
-# Helpers
-# ==========================================================
 
 def get_lab_role_arn():
     iam = boto3.client("iam")
