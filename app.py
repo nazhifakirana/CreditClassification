@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-
-from inference import CreditScoreInference
+import boto3
+import json
 
 st.set_page_config(
     page_title="Credit Score Classification",
@@ -10,28 +10,23 @@ st.set_page_config(
     layout="centered"
 )
 
+# ================================
+# SageMaker Endpoint Configuration
+# ================================
+ENDPOINT_NAME = "credit-score-endpoint"
+REGION = "us-east-1"
 
-@st.cache_resource
-def load_inference_engine():
-    return CreditScoreInference()
-
-
-st.title("💳 Credit Score Classification")
-st.caption(
-    "Masukkan data nasabah untuk memprediksi kategori credit score "
-    "(Poor / Standard / Good) menggunakan model terbaik hasil training."
+runtime = boto3.client(
+    "sagemaker-runtime",
+    region_name=REGION
 )
 
-try:
-    engine = load_inference_engine()
-except FileNotFoundError as e:
-    st.error(
-        "Model/preprocessor/label encoder belum ditemukan. "
-        "Jalankan `python main.py` terlebih dahulu untuk menghasilkan "
-        "file di folder `models/`.\n\n"
-        f"Detail error: {e}"
-    )
-    st.stop()
+st.title("💳 Credit Score Classification")
+
+st.caption(
+    "Masukkan data nasabah untuk memprediksi kategori credit score "
+    "(Poor / Standard / Good) menggunakan model yang telah dideploy di AWS SageMaker."
+)
 
 with st.form("credit_score_form"):
 
@@ -40,54 +35,146 @@ with st.form("credit_score_form"):
 
     with col1:
         age = st.number_input("Age", min_value=18, max_value=100, value=30)
+
     with col2:
         occupation = st.text_input("Occupation", value="Engineer")
 
     st.subheader("Pendapatan & Tabungan")
+
     col1, col2 = st.columns(2)
 
     with col1:
-        annual_income = st.number_input("Annual Income", min_value=0.0, value=50000.0, step=1000.0)
-        monthly_inhand_salary = st.number_input("Monthly Inhand Salary", min_value=0.0, value=4000.0, step=100.0)
+        annual_income = st.number_input(
+            "Annual Income",
+            min_value=0.0,
+            value=50000.0,
+            step=1000.0,
+        )
+
+        monthly_inhand_salary = st.number_input(
+            "Monthly Inhand Salary",
+            min_value=0.0,
+            value=4000.0,
+            step=100.0,
+        )
+
     with col2:
-        monthly_balance = st.number_input("Monthly Balance", min_value=0.0, value=300.0, step=10.0)
-        amount_invested_monthly = st.number_input("Amount Invested Monthly", min_value=0.0, value=100.0, step=10.0)
+        monthly_balance = st.number_input(
+            "Monthly Balance",
+            min_value=0.0,
+            value=300.0,
+            step=10.0,
+        )
+
+        amount_invested_monthly = st.number_input(
+            "Amount Invested Monthly",
+            min_value=0.0,
+            value=100.0,
+            step=10.0,
+        )
 
     st.subheader("Rekening & Kartu")
+
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        num_bank_accounts = st.number_input("Num Bank Accounts", min_value=0, value=3)
+        num_bank_accounts = st.number_input(
+            "Num Bank Accounts",
+            min_value=0,
+            value=3
+        )
+
     with col2:
-        num_credit_card = st.number_input("Num Credit Card", min_value=0, value=2)
+        num_credit_card = st.number_input(
+            "Num Credit Card",
+            min_value=0,
+            value=2
+        )
+
     with col3:
-        interest_rate = st.number_input("Interest Rate (%)", min_value=0.0, value=10.0)
+        interest_rate = st.number_input(
+            "Interest Rate (%)",
+            min_value=0.0,
+            value=10.0
+        )
 
     st.subheader("Pinjaman & Keterlambatan")
+
     col1, col2 = st.columns(2)
 
     with col1:
-        num_of_loan = st.number_input("Num of Loan", min_value=0, value=1)
+
+        num_of_loan = st.number_input(
+            "Num of Loan",
+            min_value=0,
+            value=1
+        )
+
         type_of_loan = st.text_input(
-            "Type of Loan (pisahkan dengan koma)",
+            "Type of Loan",
             value="Personal Loan, Auto Loan"
         )
-        delay_from_due_date = st.number_input("Delay from Due Date (days)", min_value=0, value=5)
+
+        delay_from_due_date = st.number_input(
+            "Delay from Due Date",
+            min_value=0,
+            value=5
+        )
+
     with col2:
-        num_of_delayed_payment = st.number_input("Num of Delayed Payment", min_value=0, value=2)
-        changed_credit_limit = st.number_input("Changed Credit Limit", value=5.0)
-        num_credit_inquiries = st.number_input("Num Credit Inquiries", min_value=0, value=2)
+
+        num_of_delayed_payment = st.number_input(
+            "Num of Delayed Payment",
+            min_value=0,
+            value=2
+        )
+
+        changed_credit_limit = st.number_input(
+            "Changed Credit Limit",
+            value=5.0
+        )
+
+        num_credit_inquiries = st.number_input(
+            "Num Credit Inquiries",
+            min_value=0,
+            value=2
+        )
 
     st.subheader("Profil Kredit")
+
     col1, col2 = st.columns(2)
 
     with col1:
-        credit_mix = st.selectbox("Credit Mix", ["Good", "Standard", "Bad"])
-        outstanding_debt = st.number_input("Outstanding Debt", min_value=0.0, value=1000.0, step=50.0)
-        credit_utilization_ratio = st.number_input("Credit Utilization Ratio", min_value=0.0, value=30.0)
+
+        credit_mix = st.selectbox(
+            "Credit Mix",
+            ["Good", "Standard", "Bad"]
+        )
+
+        outstanding_debt = st.number_input(
+            "Outstanding Debt",
+            min_value=0.0,
+            value=1000.0
+        )
+
+        credit_utilization_ratio = st.number_input(
+            "Credit Utilization Ratio",
+            min_value=0.0,
+            value=30.0
+        )
+
     with col2:
-        credit_history_age = st.text_input("Credit History Age", value="5 Years and 3 Months")
-        payment_of_min_amount = st.selectbox("Payment of Min Amount", ["Yes", "No"])
+
+        credit_history_age = st.text_input(
+            "Credit History Age",
+            value="5 Years and 3 Months"
+        )
+
+        payment_of_min_amount = st.selectbox(
+            "Payment of Min Amount",
+            ["Yes", "No"]
+        )
+
         payment_behaviour = st.selectbox(
             "Payment Behaviour",
             [
@@ -97,10 +184,15 @@ with st.form("credit_score_form"):
                 "High_spent_Small_value_payments",
                 "High_spent_Medium_value_payments",
                 "High_spent_Large_value_payments",
-            ]
+            ],
         )
 
-    total_emi_per_month = st.number_input("Total EMI per Month", min_value=0.0, value=150.0, step=10.0)
+    total_emi_per_month = st.number_input(
+        "Total EMI per Month",
+        min_value=0.0,
+        value=150.0,
+        step=10.0,
+    )
 
     submitted = st.form_submit_button("Predict Credit Score")
 
@@ -131,25 +223,52 @@ if submitted:
         "Monthly_Balance": monthly_balance,
     }
 
-    with st.spinner("Memproses prediksi..."):
-        label, probabilities = engine.predict(raw_input)
+    with st.spinner("Predicting..."):
 
-    st.success(f"### Predicted Credit Score: **{label}**")
+        body = json.dumps({
+            "instances": [raw_input]
+        })
 
-    if probabilities:
-        proba_df = pd.DataFrame(
-            {"Class": list(probabilities.keys()), "Probability": list(probabilities.values())}
-        ).sort_values("Probability", ascending=False)
+        try:
 
-        fig = px.bar(
-            proba_df,
-            x="Class",
-            y="Probability",
-            color="Class",
-            text_auto=".2%",
-            title="Class Probability"
-        )
-        st.plotly_chart(fig, use_container_width=True)
+            response = runtime.invoke_endpoint(
+                EndpointName=ENDPOINT_NAME,
+                ContentType="application/json",
+                Accept="application/json",
+                Body=body,
+            )
 
-    with st.expander("Lihat raw input yang dikirim ke model"):
-        st.json(raw_input)
+            result = json.loads(
+                response["Body"].read().decode("utf-8")
+            )
+
+            prediction = result["predictions"][0]
+
+            label = prediction["prediction"]
+            probabilities = prediction["probabilities"]
+
+            st.success(f"### Predicted Credit Score : **{label}**")
+
+            df = pd.DataFrame(
+                {
+                    "Class": list(probabilities.keys()),
+                    "Probability": list(probabilities.values()),
+                }
+            )
+
+            fig = px.bar(
+                df,
+                x="Class",
+                y="Probability",
+                color="Class",
+                text_auto=".2%",
+                title="Prediction Probability",
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+            with st.expander("Raw Prediction"):
+                st.json(result)
+
+        except Exception as e:
+            st.error(f"Error saat memanggil SageMaker Endpoint:\n\n{e}")
