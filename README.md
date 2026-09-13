@@ -6,25 +6,22 @@ terbaik yang dihasilkan oleh pipeline training (`main.py`).
 ## 1. Struktur File
 
 ```
-UAS/
+creditclassification/
 ├── config.py
 ├── preprocessing.py
 ├── trainer.py
 ├── evaluator.py
 ├── main.py
-├── inference.py        <-- BARU: kelas inference untuk deployment
-├── app.py               <-- BARU: web app (Streamlit)
-├── test_cases.py         <-- BARU: skrip uji 3 test case (Poor/Standard/Good)
-├── requirements.txt      <-- BARU
+├── inference.py        
+├── app.py               
+├── test_cases.py        
+├── requirements.txt      
 └── models/
     ├── best_model.pkl
     ├── preprocessor.pkl
     └── label_encoder.pkl
 ```
 
-`inference.py`, `app.py`, dan `test_cases.py` taruh sejajar dengan
-`config.py` (di folder root project, `UAS/`), karena ketiganya
-melakukan `from config import ...`.
 
 ## 2. Prasyarat
 
@@ -75,8 +72,6 @@ grafik probabilitas tiap kelas) akan tampil di bawah form.
 
 ## 6. Pengujian dengan Test Case per Kelas
 
-Sesuai requirement tugas (test case yang merepresentasikan setiap
-kelas), jalankan:
 
 ```bash
 python test_cases.py
@@ -91,24 +86,3 @@ Skrip ini berisi 3 test case buatan tangan:
   riwayat kredit panjang, credit mix baik → diekspektasikan
   diprediksi **Good**.
 
-Output di terminal menampilkan prediksi dan probabilitas tiap kelas
-untuk masing-masing test case — ini bisa langsung di-screenshot
-sebagai bukti pengujian.
-
-Untuk bukti pengujian via web (sesuai instruksi tugas: "melakukan
-screenshot untuk hasil dari test case pada model yang telah
-dideploy"), masukkan nilai dari `case_poor`, `case_standard`, dan
-`case_good` (di `test_cases.py`) satu per satu ke dalam form
-`app.py`, lalu screenshot hasil prediksi + grafik probabilitas untuk
-masing-masing kelas.
-
-## 7. Catatan
-
-- Jika nama kolom mentah pada dataset kamu sedikit berbeda dari yang
-  diasumsikan di `inference.py`/`app.py` (mengikuti dataset Kaggle
-  "Credit Score Classification" standar), sesuaikan key pada dict
-  `raw_input` di `app.py` / `test_cases.py` dengan nama kolom asli
-  di CSV kamu.
-- `preprocessor.transform()` memilih kolom berdasarkan **nama**
-  (bukan urutan), jadi urutan field pada dict input tidak masalah
-  selama nama dan jumlah kolomnya lengkap.
